@@ -176,7 +176,8 @@ test('partner invitations remain visible without JavaScript', async ({ browser, 
 test('draft claims, measurement safeguards, future events and demo anchor', async ({ page }) => {
   for (const route of ['/team', '/impact']) {
     await page.goto(route);
-    const text = await page.locator('body').innerText();
+    // Page copy makes no impact/funding claims. The verified 501(c)(3) status lives only in the legal footer.
+    const text = await page.locator('main').innerText();
     expect(text).not.toMatch(/501\(c\)\(3\)|students impacted|testimon|award|tax.exempt|funded by/i);
   }
   await expect(page.locator('.scope-band')).toContainText('PLANNED PROGRAM SCOPE');
@@ -267,5 +268,16 @@ test('public contact links use the volunteer@ org address, never Gmail', async (
       expect(href).toMatch(/^mailto:volunteer@machineliterate\.org(\?|$)/);
     }
     await expect(page.locator('body')).not.toContainText('gmail.com');
+  }
+});
+
+test('every page footer shows legal name, EIN and mailing address', async ({ page }) => {
+  for (const path of ['/', '/team', '/impact', '/get-involved']) {
+    await page.goto(path);
+    const footer = page.locator('footer.site-footer');
+    await expect(footer).toContainText('Machine Literate, Inc.');
+    await expect(footer).toContainText('EIN 43-2331175');
+    await expect(footer).toContainText('501(c)(3) nonprofit');
+    await expect(footer.locator('address')).toHaveText('845 United Nations Plaza, Apt 10A, New York, NY 10017', { useInnerText: false });
   }
 });
