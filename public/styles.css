@@ -146,3 +146,11 @@
  .editorial-intro h2,.section-heading h2{font-size:32px;letter-spacing:-.8px}
  .editorial-list dt{font-size:23px}.section-heading{margin-bottom:30px}
 }
+
+/* footer legal info */
+.footer-legal{text-align:right}.footer-legal p,.footer-legal address{font-size:13px;font-style:normal;line-height:1.6;margin:0}.footer-legal address{color:var(--pencil)}
+.footer-legal span{white-space:nowrap}
+@media(max-width:560px){.footer-legal{text-align:center}.footer-legal span{display:block}.footer-legal .sep{display:none}}
+.mission{max-width:760px;text-align:center;padding:0 0 90px}.mission .eyebrow{font-size:13px;font-weight:600;letter-spacing:.08em;margin-bottom:14px}.mission p:last-child{font-size:17px;margin-top:20px;text-wrap:balance}
+.footer-legal .footer-domains{color:var(--pencil)}
+@media(max-width:560px){.mission{padding:0 16px 60px;max-width:400px}.mission h2{font-size:32px;letter-spacing:-1px}.mission p:last-child{font-size:15px}}
