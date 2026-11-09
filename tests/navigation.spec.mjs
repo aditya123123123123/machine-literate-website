@@ -281,3 +281,14 @@ test('every page footer shows legal name, EIN and mailing address', async ({ pag
     await expect(footer.locator('address')).toHaveText('845 United Nations Plaza, Apt 10A, New York, NY 10017', { useInnerText: false });
   }
 });
+
+test('homepage states the mission; every footer names both official domains', async ({ page }) => {
+  await page.goto('/');
+  const mission = page.locator('#mission');
+  await expect(mission.getByRole('heading', { level: 2 })).toHaveText('Help every student understand the AI around them.');
+  await expect(mission).toContainText('Machine Literate is a nonprofit.');
+  for (const path of ['/', '/team', '/impact', '/get-involved']) {
+    await page.goto(path);
+    await expect(page.locator('footer .footer-domains')).toHaveText('Official websites: machineliterate.org and machineliterate.com');
+  }
+});
