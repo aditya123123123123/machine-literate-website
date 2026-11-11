@@ -1,9 +1,11 @@
 // Page checks that run on every pull request (Chromium + WebKit).
 // Ported from the launch QA scripts: layout, the demo lesson and the waitlist form.
 import { test, expect } from '@playwright/test';
+import { readdirSync } from 'node:fs';
 
 const WIDTHS = [1440, 1024, 768, 390, 320];
-const PAGES = ['/', '/team', '/impact', '/get-involved'];
+const PAGES = readdirSync(new URL('../public/', import.meta.url)).filter(name => name.endsWith('.html')).sort()
+  .map(name => name === 'index.html' ? '/' : `/${name.slice(0, -5)}`);
 
 function watch(page, origin) {
   const problems = [];
@@ -66,6 +68,7 @@ test('site-wide audience covers grades 5–12 while preserving lesson bands', as
     // Grades 5–8 is valid only within the named Foundations course band.
     await expect(page.locator('body')).toContainText(/grades 5–12/i);
   }
+  await page.goto('/get-involved');
   await expect(page.locator('.role').filter({ has: page.getByRole('heading', { name: 'Teachers', exact: true }) })).toContainText('grades 5–12');
   await expect(page.locator('.role').filter({ has: page.getByRole('heading', { name: 'Testers', exact: true }) })).toContainText('grades 5–12');
   await page.goto('/');

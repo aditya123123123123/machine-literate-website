@@ -1,13 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 const require = createRequire(import.meta.url);
 const axePath = require.resolve('axe-core/axe.min.js');
+const htmlPages = readdirSync(new URL('../public/', import.meta.url)).filter(name => name.endsWith('.html')).sort();
+const pageRoutes = htmlPages.map(name => name === 'index.html' ? '/' : `/${name.slice(0, -5)}`);
 const routes = [['/', 'Home'], ['/team', 'Team'], ['/impact', 'Impact'], ['/get-involved', 'Get involved']];
 
 test('static headers remain synchronized', () => {
-  const headers = ['index', 'team', 'impact', 'get-involved'].map(name =>
-    readFileSync(new URL(`../public/${name}.html`, import.meta.url), 'utf8')
+  const headers = htmlPages.map(name =>
+    readFileSync(new URL(`../public/${name}`, import.meta.url), 'utf8')
       .match(/<header.*?<\/header>/s)[0].replace(' aria-current="page"', ''));
   expect(new Set(headers).size).toBe(1);
 });
@@ -29,7 +31,7 @@ for (const width of [1440, 390]) {
     await page.goBack();
     await expect(page.locator('.site-nav [aria-current=page]')).toHaveText('Get involved');
   });
-  for (const [route] of routes) {
+  for (const route of pageRoutes) {
     test(`axe accessibility ${route} @ ${width}`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(route);
@@ -244,7 +246,7 @@ test('new pages are honest draft content and sitemap routes resolve', async ({ p
   await page.goto('/team');
   await expect(page.locator('.open-intro')).toContainText('not yet open to students');
   const sitemap = await (await request.get('/sitemap.xml')).text();
-  for (const [route] of routes) {
+  for (const route of pageRoutes) {
     expect(sitemap).toContain(`https://machineliterate.org${route}`);
     expect((await request.get(route)).status()).toBe(200);
   }
@@ -260,7 +262,7 @@ test('new pages are honest draft content and sitemap routes resolve', async ({ p
 });
 
 test('public contact links use the volunteer@ org address, never Gmail', async ({ page }) => {
-  for (const path of ['/', '/get-involved']) {
+  for (const path of ['/', '/get-involved', '/privacy']) {
     await page.goto(path);
     const mailtos = page.locator('a[href^="mailto:"]');
     expect(await mailtos.count()).toBeGreaterThan(0);
@@ -272,7 +274,7 @@ test('public contact links use the volunteer@ org address, never Gmail', async (
 });
 
 test('every page footer shows legal name, EIN and mailing address', async ({ page }) => {
-  for (const path of ['/', '/team', '/impact', '/get-involved']) {
+  for (const path of pageRoutes) {
     await page.goto(path);
     const footer = page.locator('footer.site-footer');
     await expect(footer).toContainText('Machine Literate, Inc.');
@@ -287,7 +289,7 @@ test('homepage states the mission; every footer names both official domains', as
   const mission = page.locator('#mission');
   await expect(mission.getByRole('heading', { level: 2 })).toHaveText('Help every student understand the AI around them.');
   await expect(mission).toContainText('Machine Literate is a nonprofit.');
-  for (const path of ['/', '/team', '/impact', '/get-involved']) {
+  for (const path of pageRoutes) {
     await page.goto(path);
     await expect(page.locator('footer .footer-domains')).toHaveText('Official websites: machineliterate.org and machineliterate.com');
   }
