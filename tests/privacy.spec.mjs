@@ -48,7 +48,7 @@ test('privacy explains stored signup fields and the public contact address', asy
   for (const text of ['November 11, 2026', 'Machine Literate, Inc.', '501(c)(3)', '43-2331175',
     '845 United Nations Plaza, Apt 10A, New York, NY 10017', 'under 13 or 13+',
     'signup number', 'date and time', 'Vercel Web Analytics', 'Google Analytics',
-    'does not set cookies', 'We do not send names or email addresses', 'There are no ads', 'remove a child’s info']) {
+    'does not set cookies', 'only if you click Allow', '2 months', 'Google Signals and ad personalization are turned off', 'Cookie settings', 'local storage', 'We do not send names or email addresses', 'There are no ads', 'remove a child’s info']) {
     await expect(main).toContainText(text);
   }
   await expect(main.getByRole('link', { name: 'volunteer@machineliterate.org' })).toHaveAttribute('href', 'mailto:volunteer@machineliterate.org');
