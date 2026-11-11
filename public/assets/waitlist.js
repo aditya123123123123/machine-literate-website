@@ -32,6 +32,9 @@
       const r = await fetch(form.getAttribute('action'), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' }, body: new URLSearchParams(new FormData(form)) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.ok) throw new Error(d.error || 'failed');
+      if (typeof window.mlTrack === 'function' && ['parent', 'teacher', 'student', 'other'].includes(role)) {
+        window.mlTrack('waitlist_signup', { role });
+      }
       form.classList.add('wl-done');
       form.innerHTML = '<p class="wl-success" role="status" tabindex="-1"><strong>You’re on the list.</strong> We’ll email <span class="wl-addr">' + v.replace(/[<>&"]/g, '') + '</span> when lessons open.</p>';
       form.querySelector('.wl-success').focus();

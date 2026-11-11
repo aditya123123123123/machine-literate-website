@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 const asset = name => readFileSync(new URL(`../public/assets/${name}`, import.meta.url), 'utf8');
 
@@ -9,7 +9,9 @@ test('logo is byte-identical to the existing browser favicon', () => {
   expect(asset('mark.svg')).toContain('<rect width="180" height="180" rx="36" fill="#FFD84D"/>');
 });
 
-for (const route of ['/', '/get-involved']) {
+const pages = readdirSync(new URL('../public/', import.meta.url)).filter(name => name.endsWith('.html')).sort();
+for (const name of pages) {
+  const route = name === 'index.html' ? '/' : `/${name.slice(0, -5)}`;
   for (const width of [320, 390, 1024, 1440]) {
     test(`robot logo fits header ${route} at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });

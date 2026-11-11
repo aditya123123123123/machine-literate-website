@@ -147,6 +147,17 @@
  .editorial-list dt{font-size:23px}.section-heading{margin-bottom:30px}
 }
 
+/* Plain-language privacy page, using the shared brand and navigation. */
+.privacy-page{max-width:760px;padding-block:64px 80px}
+.privacy-page h1{font-size:clamp(42px,5.4vw,76px);letter-spacing:-.045em;margin-bottom:20px}
+.privacy-page .privacy-updated{font-size:14px}
+.privacy-page section{margin-top:36px}
+.privacy-page h2{font-size:28px;letter-spacing:-.6px;margin-bottom:16px}
+.privacy-page p+p{margin-top:16px}
+.privacy-page a{overflow-wrap:anywhere}
+.footer-links a{display:inline-flex;align-items:center;min-height:44px;min-width:44px}
+@media(max-width:560px){.privacy-page{padding-block:36px 56px}}
+
 /* footer legal info */
 .footer-legal{text-align:right}.footer-legal p,.footer-legal address{font-size:13px;font-style:normal;line-height:1.6;margin:0}.footer-legal address{color:var(--pencil)}
 .footer-legal span{white-space:nowrap}
