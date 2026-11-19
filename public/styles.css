@@ -168,6 +168,25 @@ html{scroll-padding-bottom:var(--consent-space,0px)}
 @media(max-width:600px){.analytics-consent{flex-direction:column;align-items:stretch;gap:14px;padding:16px}.consent-actions .btn{flex:1;min-width:0}}
 @media(max-width:560px){.privacy-page{padding-block:36px 56px}}
 
+
+/* Volunteer signup: shared type, controls and success styles. */
+.volunteer-section{max-width:620px;padding-bottom:90px}
+.volunteer-section h2{margin-bottom:16px}
+#volunteer-form{display:grid;gap:20px;margin-top:28px}
+.volunteer-field{display:grid;gap:8px}
+.volunteer-field label{font-weight:600}
+.volunteer-field input,.volunteer-field select,.volunteer-field textarea{width:100%;min-height:48px;padding:12px;border:1px solid var(--ink);border-radius:12px;background:var(--paper);color:var(--ink);font:inherit}
+.volunteer-field textarea{resize:vertical}
+.volunteer-age{display:flex;align-items:center;gap:12px;min-height:44px;cursor:pointer}
+.volunteer-age input{width:20px;height:20px;accent-color:var(--ink);flex-shrink:0}
+.volunteer-section .cta-note{margin-top:0;font-size:13px}
+.volunteer-email{margin-top:24px;overflow-wrap:anywhere}
+.volunteer-thanks{display:none;margin-top:24px}
+.volunteer-thanks:target,.volunteer-thanks.is-visible{display:block}
+.volunteer-thanks:target + #volunteer-form,.volunteer-thanks.is-visible + #volunteer-form{display:none}
+.volunteer-section [aria-invalid=true]{border-color:#b42318}
+@media(max-width:560px){.volunteer-section{padding-bottom:64px}.volunteer-section h2{font-size:32px}}
+
 /* footer legal info */
 .footer-legal{text-align:right}.footer-legal p,.footer-legal address{font-size:13px;font-style:normal;line-height:1.6;margin:0}.footer-legal address{color:var(--pencil)}
 .footer-legal span{white-space:nowrap}

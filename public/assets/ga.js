@@ -4,6 +4,13 @@
   window.mlTrack = () => {};
   if (!['machineliterate.org', 'www.machineliterate.org'].includes(location.hostname)) return;
 
+  const adKey = 'ml-ad-visit';
+  const query = new URLSearchParams(location.search);
+  let adVisit = ['gclid', 'gbraid', 'wbraid'].some(key => query.has(key));
+  try {
+    if (adVisit) sessionStorage.setItem(adKey, '1');
+    else adVisit = sessionStorage.getItem(adKey) === '1';
+  } catch { /* A blocked store must not break this page's ad measurement. */ }
   const key = 'ml-analytics-consent';
   const readChoice = () => {
     try {
@@ -31,13 +38,17 @@
   let granted = choice === 'granted';
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () { window.dataLayer.push(arguments); };
-  // Advertising consent is always denied. Only analytics has an explicit opt-in path.
+  // Advertising cookies and personalization stay denied, including on ad visits.
   window.gtag('consent', 'default', {
     ad_storage: 'denied',
     analytics_storage: 'denied',
     ad_user_data: 'denied',
     ad_personalization: 'denied',
   });
+  if (adVisit) {
+    window.gtag('consent', 'update', { ad_user_data: 'granted' });
+    window.gtag('set', 'url_passthrough', true);
+  }
   if (granted) window.gtag('consent', 'update', { analytics_storage: 'granted' });
   else deleteCookies();
   window.gtag('js', new Date());
@@ -47,8 +58,15 @@
   });
 
   window.mlTrack = (name, params) => {
-    // Analytics must never interrupt a signup, even if the tracker is blocked.
-    try { window.gtag('event', name, params); } catch { /* Keep the site usable. */ }
+    // Only known signup roles may leave the page. Never forward form text.
+    const roles = {
+      waitlist_signup: ['parent', 'teacher', 'student', 'other'],
+      volunteer_signup: ['teacher', 'tester', 'lesson writer', 'web and design', 'tutor', 'other'],
+    };
+    if (!Object.hasOwn(roles, name) || !roles[name].includes(params?.role)) return;
+    try {
+      window.gtag('event', name, { role: params.role });
+    } catch { /* Analytics must never interrupt a signup. */ }
   };
   const script = document.createElement('script');
   script.async = true;
@@ -60,7 +78,7 @@
   banner.setAttribute('role', 'region');
   banner.setAttribute('aria-label', 'Analytics cookie choice');
   banner.hidden = true;
-  banner.innerHTML = '<div><h2>Allow analytics cookies?</h2><p>They help us count visits and waitlist sign-ups. No ads, no tracking across sites. <a href="/privacy">Privacy</a></p></div><div class="consent-actions"><button type="button" class="btn btn-light" data-consent="granted">Allow</button><button type="button" class="btn btn-light" data-consent="denied">No thanks</button></div>';
+  banner.innerHTML = '<div><h2>Allow analytics cookies?</h2><p>They help us count visits and sign-ups. No advertising cookies. We also measure sign-ups from our Google Search ads. <a href="/privacy">Privacy</a></p></div><div class="consent-actions"><button type="button" class="btn btn-light" data-consent="granted">Allow</button><button type="button" class="btn btn-light" data-consent="denied">No thanks</button></div>';
   document.body.appendChild(banner);
   let returnFocus = document.querySelector('main');
   const reserveSpace = () => {
