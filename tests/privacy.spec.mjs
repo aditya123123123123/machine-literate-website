@@ -45,9 +45,9 @@ for (const width of [360, 390]) {
 test('privacy explains stored signup fields and the public contact address', async ({ page }) => {
   await page.goto('/privacy');
   const main = page.locator('main');
-  for (const text of ['November 11, 2026', 'Machine Literate, Inc.', '501(c)(3)', '43-2331175',
+  for (const text of ['November 18, 2026', 'Machine Literate, Inc.', '501(c)(3)', '43-2331175',
     '845 United Nations Plaza, Apt 10A, New York, NY 10017', 'under 13 or 13+',
-    'signup number', 'date and time', 'Vercel Web Analytics', 'Google Analytics',
+    'name, email, chosen role and optional note', 'ad click ID', 'ads on Google Search', 'delete your waitlist or volunteer info', 'signup number', 'date and time', 'Vercel Web Analytics', 'Google Analytics',
     'does not set cookies', 'only if you click Allow', '2 months', 'Google Signals and ad personalization are turned off', 'Cookie settings', 'local storage', 'We do not send names or email addresses', 'There are no ads', 'remove a child’s info']) {
     await expect(main).toContainText(text);
   }
