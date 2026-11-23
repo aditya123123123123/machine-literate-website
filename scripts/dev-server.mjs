@@ -37,7 +37,7 @@ createServer(async (req, res) => {
     return res.end('User-agent: *\nDisallow: /\n');
   }
   if (url.pathname.startsWith('/api/')) {
-    if (url.pathname !== '/api/waitlist') { res.statusCode = 404; return res.end('Not found'); }
+    if (!['/api/waitlist', '/api/volunteer'].includes(url.pathname)) { res.statusCode = 404; return res.end('Not found'); }
     const name = url.pathname.slice(5).replace(/[^a-z0-9-]/gi, '');
     try {
       const mod = await import(join(root, 'api', `${name}.js`));

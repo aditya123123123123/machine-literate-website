@@ -2,11 +2,12 @@
 
 Source for [machineliterate.org](https://machineliterate.org): free AI lessons for kids in grades 5–12.
 
-It's a plain static site (HTML, CSS, a little JavaScript) plus one serverless function for the waitlist. No framework, no build step.
+It's a plain static site (HTML, CSS, a little JavaScript) plus serverless functions for waitlist and volunteer signups. No framework, no build step.
 
 ```
 public/          Everything the browser sees (index.html, team.html, impact.html, get-involved.html, styles.css, assets/)
 api/waitlist.js  Waitlist signup endpoint (Vercel serverless function)
+api/volunteer.js Volunteer signup endpoint (13 or older)
 tests/           Automated checks that run on every pull request
 scripts/         Local dev server and admin helpers
 vercel.json      Hosting config (clean URLs, security headers)
@@ -24,7 +25,7 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-Locally the waitlist form works end to end, but it runs in **dry-run mode**: it validates and shows the success message without saving anything. Only the production site writes to the real waitlist, so you never need database credentials.
+Locally the waitlist and volunteer forms work end to end, but it runs in **dry-run mode**: it validates and shows the success message without saving anything. Only the production site writes to the real waitlist, so you never need database credentials.
 
 ## Run the tests
 
@@ -57,6 +58,14 @@ your branch ──PR──▶ preprod ──release PR──▶ main ──▶ m
 Nobody pushes straight to `main` or `preprod`. Vercel builds every branch automatically, so you never deploy by hand.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+
+## Signup measurement and volunteer data
+
+Google Analytics runs only on `machineliterate.org` and `www.machineliterate.org`. All four consent settings start denied. Analytics cookies need an explicit Allow; Cookie settings revokes that grant and removes GA cookies. Advertising storage and personalization always stay denied.
+
+For visits with `gclid`, `gbraid` or `wbraid`, `ml-ad-visit=1` in sessionStorage remembers the ad visit within the tab. Only these visits grant `ad_user_data` and enable URL passthrough for click IDs, even if analytics cookies are declined. Google Ads uses imported GA4 key events for conversion measurement; there is no separate AW tag or conversion event. No `ads_data_redaction` setting is applied. Signup analytics sends only an allowlisted role, never name, email, age or note. This configuration does not itself verify Google's attribution or bidding eligibility for a child-directed site.
+
+`/api/volunteer` requires a name (100 characters), email (254), supported role and age-13 confirmation, with an optional note (500). It shares the waitlist's 2 KB body cap and honeypot. Only `VERCEL_ENV=production` writes to Neon; previews/local validate and return dry-run success. The `volunteers` table is created on first production signup. Duplicate emails are left unchanged. No-JS submissions redirect to a visible thank-you. Export with `node scripts/export-volunteers.mjs` using an authorized `DATABASE_URL`; exports contain personal data and must stay private.
 
 ## License
 
