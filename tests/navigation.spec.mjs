@@ -247,7 +247,8 @@ test('new pages are honest draft content and sitemap routes resolve', async ({ p
   await expect(page.locator('.open-intro')).toContainText('not yet open to students');
   const sitemap = await (await request.get('/sitemap.xml')).text();
   for (const route of pageRoutes) {
-    expect(sitemap).toContain(`https://machineliterate.org${route}`);
+    if (route === '/joined') expect(sitemap).not.toContain('https://machineliterate.org/joined');
+    else expect(sitemap).toContain(`https://machineliterate.org${route}`);
     expect((await request.get(route)).status()).toBe(200);
   }
   expect((await request.get('/README.md')).status()).toBe(404);

@@ -113,6 +113,7 @@ test.describe('waitlist form', () => {
       await expect(page.locator('#wl-note')).toContainText('parent or guardian');
 
       await page.click('.waitlist button[type=submit]');
+      await expect(page).toHaveURL(/\/joined$/);
       await expect(page.locator('.wl-success')).toContainText('You’re on the list.');
       await expect(page.locator('.wl-success')).toContainText('kid@example.com');
     });
@@ -139,6 +140,7 @@ test.describe('waitlist form', () => {
     await page.goto('/');
     await page.fill('#wl-email', 'parent@example.com');
     await page.click('.waitlist button[type=submit]');
+    await expect(page).toHaveURL(/\/joined$/);
     await expect(page.locator('.wl-success')).toContainText('parent@example.com');
   });
 });

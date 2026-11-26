@@ -52,6 +52,7 @@ test('ad waitlist and volunteer success send GA4 events with only role, never fo
   await page.getByRole('button', { name: 'No thanks' }).click();
   await page.fill('#wl-email', 'private@example.com');
   await page.locator('#waitlist button[type=submit]').click();
+  await expect(page).toHaveURL(/\/joined$/);
   await expect(page.locator('.wl-success')).toBeVisible();
   expect((await commands(page)).filter(c => c[0] === 'event')).toEqual([
     ['event', 'waitlist_signup', { role: 'parent', send_to: 'G-VY51YYZ1TL' }],
@@ -81,6 +82,30 @@ test('ad waitlist and volunteer success send GA4 events with only role, never fo
   ]);
   expect(JSON.stringify(await commands(page))).not.toMatch(/private@example|Private Name|Private Note|"email"|"note"|"name"/);
 });
+for (const param of ['gclid', 'gbraid', 'wbraid']) {
+  test(`${param} waitlist conversion fires once on joined, never on reload or a direct visit`, async ({ page, context, request, baseURL }) => {
+    await setup(page, request, baseURL, { path: `/?${param}=fake-click` });
+    expect((await commands(page)).filter(c => c[0] === 'event')).toEqual([]);
+    await page.fill('#wl-email', 'parent@example.com');
+    await page.locator('#waitlist button[type=submit]').click();
+    await expect(page).toHaveURL('https://machineliterate.org/joined');
+    await expect(page.locator('.wl-addr')).toHaveText('parent@example.com');
+    expect((await commands(page)).filter(c => c[0] === 'event')).toEqual([
+      ['event', 'waitlist_signup', { role: 'parent', send_to: 'G-VY51YYZ1TL' }],
+      ['event', 'conversion', { send_to: ADS_WAITLIST }],
+    ]);
+    expect(JSON.stringify(await commands(page))).not.toContain('parent@example.com');
+    expect(await context.cookies()).toEqual([]);
+    expect(await page.evaluate(() => [sessionStorage.getItem('ml-joined'), sessionStorage.getItem('ml-joined-email')])).toEqual([null, null]);
+    await page.reload();
+    expect((await commands(page)).filter(c => c[0] === 'event')).toEqual([]);
+    await page.goto(`https://machineliterate.org/joined?${param}=another-click`);
+    expect((await commands(page)).filter(c => c[0] === 'event')).toEqual([]);
+    await expect(page.locator('.joined-email')).toBeHidden();
+    expect(await context.cookies()).toEqual([]);
+  });
+}
+
 test('blocked sessionStorage still measures the current ad page without throwing', async ({ page, request, baseURL }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.addInitScript(() => { Object.defineProperty(window, 'sessionStorage', { get() { throw new Error('blocked'); } }); });
