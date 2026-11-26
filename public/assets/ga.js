@@ -56,10 +56,11 @@
     allow_google_signals: false,
     allow_ad_personalization_signals: false,
   });
-  // Google Ads conversion tag: ad visits only, cookieless (ad_storage stays denied).
+  // Google Ads tag on every page so Ads can verify it; cookieless (ad_storage and
+  // ad_personalization stay denied). Conversions are still only sent for ad visits.
   const adsTag = 'AW-18570894075';
   const adsWaitlist = `${adsTag}/BG0tCNbLksAdEPu1pZdF`;
-  if (adVisit) window.gtag('config', adsTag, { allow_ad_personalization_signals: false });
+  window.gtag('config', adsTag, { allow_ad_personalization_signals: false });
 
   window.mlTrack = (name, params) => {
     // Only known signup roles may leave the page. Never forward form text.
