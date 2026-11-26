@@ -34,17 +34,17 @@ for (const param of ['gclid', 'gbraid', 'wbraid']) test(`${param} grants only ad
   await page.getByRole('button', { name: 'No thanks' }).click();
   expect(await context.cookies()).toEqual([]);
 });
-test('non-ad visit has no passthrough or ad user data grant', async ({ page, request, baseURL }) => {
+test('non-ad visit loads the Ads tag but has no passthrough, ad user data grant, or conversion', async ({ page, request, baseURL }) => {
   await setup(page, request, baseURL);
   await page.evaluate(() => mlTrack('waitlist_signup', { role: 'parent' }));
   const q = await commands(page);
   expect(q.filter(c => c[0] === 'consent')).toEqual([
     ['consent', 'default', { ad_storage: 'denied', analytics_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' }],
   ]);
-  expect(q.filter(c => c[0] === 'config').map(c => c[1])).toEqual(['G-VY51YYZ1TL']);
+  expect(q.filter(c => c[0] === 'config').map(c => c[1])).toEqual(['G-VY51YYZ1TL', ADS_TAG]);
   expect(q.some(c => c[1] === 'url_passthrough')).toBe(false);
   expect(q.filter(c => c[0] === 'event')).toEqual([['event', 'waitlist_signup', { role: 'parent', send_to: 'G-VY51YYZ1TL' }]]);
-  expect(JSON.stringify(q)).not.toContain(ADS_TAG);
+  expect(JSON.stringify(q)).not.toContain(ADS_WAITLIST);
   expect(await page.evaluate(() => sessionStorage.getItem('ml-ad-visit'))).toBeNull();
 });
 test('ad waitlist and volunteer success send GA4 events with only role, never form text', async ({ page, request, baseURL }) => {
