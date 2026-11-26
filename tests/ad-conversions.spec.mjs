@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+const ADS_TAG = 'AW-18570894075';
+const ADS_WAITLIST = 'AW-18570894075/BG0tCNbLksAdEPu1pZdF';
 const commands = page => page.evaluate(() => (window.dataLayer || []).map(entry => Array.from(entry)));
 async function setup(page, request, baseURL, { path = '/', hostname = 'machineliterate.org' } = {}) {
   await page.route('**/*', async route => {
@@ -21,6 +23,7 @@ for (const param of ['gclid', 'gbraid', 'wbraid']) test(`${param} grants only ad
   expect(q[0][2]).toEqual({ ad_storage: 'denied', analytics_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   expect(q).toContainEqual(['consent', 'update', { ad_user_data: 'granted' }]);
   expect(q).toContainEqual(['set', 'url_passthrough', true]);
+  expect(q).toContainEqual(['config', ADS_TAG, { allow_ad_personalization_signals: false }]);
   expect(q.some(c => c[1] === 'ads_data_redaction')).toBe(false);
   expect(await page.evaluate(() => sessionStorage.getItem('ml-ad-visit'))).toBe('1');
   expect(await page.evaluate(() => localStorage.getItem('ml-ad-visit'))).toBeNull();
@@ -40,6 +43,8 @@ test('non-ad visit has no passthrough or ad user data grant', async ({ page, req
   ]);
   expect(q.filter(c => c[0] === 'config').map(c => c[1])).toEqual(['G-VY51YYZ1TL']);
   expect(q.some(c => c[1] === 'url_passthrough')).toBe(false);
+  expect(q.filter(c => c[0] === 'event')).toEqual([['event', 'waitlist_signup', { role: 'parent', send_to: 'G-VY51YYZ1TL' }]]);
+  expect(JSON.stringify(q)).not.toContain(ADS_TAG);
   expect(await page.evaluate(() => sessionStorage.getItem('ml-ad-visit'))).toBeNull();
 });
 test('ad waitlist and volunteer success send GA4 events with only role, never form text', async ({ page, request, baseURL }) => {
@@ -49,7 +54,8 @@ test('ad waitlist and volunteer success send GA4 events with only role, never fo
   await page.locator('#waitlist button[type=submit]').click();
   await expect(page.locator('.wl-success')).toBeVisible();
   expect((await commands(page)).filter(c => c[0] === 'event')).toEqual([
-    ['event', 'waitlist_signup', { role: 'parent' }],
+    ['event', 'waitlist_signup', { role: 'parent', send_to: 'G-VY51YYZ1TL' }],
+    ['event', 'conversion', { send_to: ADS_WAITLIST }],
   ]);
   expect(JSON.stringify(await commands(page))).not.toContain('private@example.com');
   await page.goto('https://machineliterate.org/get-involved');
@@ -61,16 +67,17 @@ test('ad waitlist and volunteer success send GA4 events with only role, never fo
   await page.locator('#volunteer-form button').click();
   await expect(page.locator('#volunteer-thanks')).toBeVisible();
   expect((await commands(page)).filter(c => c[0] === 'event')).toEqual([
-    ['event', 'volunteer_signup', { role: 'tutor' }],
+    ['event', 'volunteer_signup', { role: 'tutor', send_to: 'G-VY51YYZ1TL' }],
   ]);
   await page.evaluate(() => {
     mlTrack('volunteer_signup', { role: 'tutor', email: 'private@example.com', name: 'Private Name', note: 'Private Note' });
     mlTrack('waitlist_signup', { role: 'parent', email: 'private@example.com' });
   });
   expect((await commands(page)).filter(c => c[0] === 'event')).toEqual([
-    ['event', 'volunteer_signup', { role: 'tutor' }],
-    ['event', 'volunteer_signup', { role: 'tutor' }],
-    ['event', 'waitlist_signup', { role: 'parent' }],
+    ['event', 'volunteer_signup', { role: 'tutor', send_to: 'G-VY51YYZ1TL' }],
+    ['event', 'volunteer_signup', { role: 'tutor', send_to: 'G-VY51YYZ1TL' }],
+    ['event', 'waitlist_signup', { role: 'parent', send_to: 'G-VY51YYZ1TL' }],
+    ['event', 'conversion', { send_to: ADS_WAITLIST }],
   ]);
   expect(JSON.stringify(await commands(page))).not.toMatch(/private@example|Private Name|Private Note|"email"|"note"|"name"/);
 });
@@ -85,4 +92,20 @@ test('preview ad URL remains a complete Google no-op', async ({ page, request, b
   await setup(page, request, baseURL, { path: '/?gclid=x', hostname: 'preview.vercel.app' });
   expect(await commands(page)).toEqual([]);
   expect(await page.evaluate(() => sessionStorage.getItem('ml-ad-visit'))).toBeNull();
+});
+test('ad conversion fires only after a successful waitlist API response', async ({ page, request, baseURL }) => {
+  await page.route('**/*', async route => {
+    const url = new URL(route.request().url());
+    if (url.hostname === 'machineliterate.org') {
+      if (url.pathname === '/api/waitlist') return route.fulfill({ status: 500, json: { ok: false } });
+      return route.fulfill({ response: await request.get(baseURL + url.pathname + url.search) });
+    }
+    if (url.hostname === 'www.googletagmanager.com') return route.fulfill({ contentType: 'text/javascript', body: '' });
+    return route.abort();
+  });
+  await page.goto('https://machineliterate.org/?gclid=fake-click');
+  await page.fill('#wl-email', 'private@example.com');
+  await page.locator('#waitlist button[type=submit]').click();
+  await expect(page.locator('.wl-msg')).toContainText('didn’t go through');
+  expect((await commands(page)).filter(c => c[0] === 'event')).toEqual([]);
 });
