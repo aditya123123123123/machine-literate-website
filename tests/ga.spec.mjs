@@ -70,12 +70,23 @@ for (const role of ['parent', 'teacher', 'student', 'other']) {
     if (role === 'student') await page.locator('input[name=age][value=under13]').check();
     await page.fill('#wl-email', email);
     await page.locator('#waitlist button[type=submit]').click();
+    await expect(page).toHaveURL(/\/joined$/);
     await expect(page.locator('.wl-success')).toBeVisible();
+    await expect(page.locator('.wl-addr')).toHaveText(email);
     const queue = await commands(page);
     expect(queue.filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role, send_to: 'G-VY51YYZ1TL' }]]);
     expect(JSON.stringify(queue)).not.toContain(email);
     expect(JSON.stringify(queue)).not.toMatch(/under13|13plus|"email"|"age"/);
-    expect(external).toEqual([`https://www.googletagmanager.com/gtag/js?id=${measurementId}`]);
+    await expect.poll(() => external.length).toBe(2);
+    expect(external).toEqual(Array(2).fill(`https://www.googletagmanager.com/gtag/js?id=${measurementId}`));
+    expect(await context.cookies()).toEqual([]);
+    expect(await page.evaluate(() => [sessionStorage.getItem('ml-joined'), sessionStorage.getItem('ml-joined-email')])).toEqual([null, null]);
+    await page.reload();
+    expect((await commands(page)).filter(entry => entry[0] === 'event')).toEqual([]);
+    await expect(page.locator('.joined-email')).toBeHidden();
+    await page.goto('https://machineliterate.org/');
+    await page.goBack();
+    expect((await commands(page)).filter(entry => entry[0] === 'event')).toEqual([]);
     expect(await context.cookies()).toEqual([]);
   });
 }
@@ -227,6 +238,7 @@ for (const width of [390, 1440]) {
     // Do not dismiss the banner: form use must not require making a choice.
     await page.locator('#wl-email').fill('private-mobile@example.com');
     await page.locator('#waitlist button[type=submit]').click();
+    await expect(page).toHaveURL(/\/joined$/);
     await expect(page.locator('.wl-success')).toBeVisible();
     await expect(banner(page)).toBeVisible();
     expect((await commands(page)).filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role: 'parent', send_to: 'G-VY51YYZ1TL' }]]);
@@ -241,6 +253,7 @@ test('opted-in signup still sends role only, never email or age', async ({ page,
   await page.locator('input[name=age][value=under13]').check();
   await page.fill('#wl-email', 'private-opt-in@example.com');
   await page.locator('#waitlist button[type=submit]').click();
+  await expect(page).toHaveURL(/\/joined$/);
   await expect(page.locator('.wl-success')).toBeVisible();
   const queue = await commands(page);
   expect(queue.filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role: 'student', send_to: 'G-VY51YYZ1TL' }]]);
@@ -263,7 +276,13 @@ test('blocked localStorage never breaks consent or signup', async ({ page, reque
   await banner(page).getByRole('button', { name: 'No thanks' }).click();
   await page.fill('#wl-email', 'private-storage@example.com');
   await page.locator('#waitlist button[type=submit]').click();
+  await expect(page).toHaveURL(/\/joined$/);
   await expect(page.locator('.wl-success')).toBeVisible();
+  await expect(page.locator('.joined-email')).toBeHidden();
+  expect((await commands(page)).filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role: 'parent', send_to: 'G-VY51YYZ1TL' }]]);
+  expect(JSON.stringify(await commands(page))).not.toContain('private-storage@example.com');
+  await page.reload();
+  expect((await commands(page)).filter(entry => entry[0] === 'event')).toEqual([]);
   expect(errors).toEqual([]);
 });
 
@@ -272,5 +291,6 @@ test('signup still succeeds when analytics is missing', async ({ page }) => {
   await page.goto('/');
   await page.fill('#wl-email', 'parent@example.com');
   await page.locator('#waitlist button[type=submit]').click();
+  await expect(page).toHaveURL(/\/joined$/);
   await expect(page.locator('.wl-success')).toBeVisible();
 });

@@ -32,12 +32,17 @@
       const r = await fetch(form.getAttribute('action'), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' }, body: new URLSearchParams(new FormData(form)) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.ok) throw new Error(d.error || 'failed');
-      if (typeof window.mlTrack === 'function' && ['parent', 'teacher', 'student', 'other'].includes(role)) {
-        window.mlTrack('waitlist_signup', { role });
+      let destination = '/joined';
+      if (['parent', 'teacher', 'student', 'other'].includes(role)) {
+        try {
+          sessionStorage.setItem('ml-joined-email', v);
+          sessionStorage.setItem('ml-joined', role);
+        } catch {
+          // Only a whitelisted role may enter the URL, never the email or age.
+          destination += '?role=' + role;
+        }
       }
-      form.classList.add('wl-done');
-      form.innerHTML = '<p class="wl-success" role="status" tabindex="-1"><strong>You’re on the list.</strong> We’ll email <span class="wl-addr">' + v.replace(/[<>&"]/g, '') + '</span> when lessons open.</p>';
-      form.querySelector('.wl-success').focus();
+      location.assign(destination);
     } catch (err) {
       btn.disabled = false; btn.textContent = 'Join the waitlist';
       form.classList.add('wl-error');
