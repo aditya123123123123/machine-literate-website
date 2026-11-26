@@ -71,7 +71,7 @@ for (const role of ['parent', 'teacher', 'student', 'other']) {
     await page.locator('#waitlist button[type=submit]').click();
     await expect(page.locator('.wl-success')).toBeVisible();
     const queue = await commands(page);
-    expect(queue.filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role }]]);
+    expect(queue.filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role, send_to: 'G-VY51YYZ1TL' }]]);
     expect(JSON.stringify(queue)).not.toContain(email);
     expect(JSON.stringify(queue)).not.toMatch(/under13|13plus|"email"|"age"/);
     expect(external).toEqual([`https://www.googletagmanager.com/gtag/js?id=${measurementId}`]);
@@ -227,7 +227,7 @@ for (const width of [390, 1440]) {
     await page.locator('#waitlist button[type=submit]').click();
     await expect(page.locator('.wl-success')).toBeVisible();
     await expect(banner(page)).toBeVisible();
-    expect((await commands(page)).filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role: 'parent' }]]);
+    expect((await commands(page)).filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role: 'parent', send_to: 'G-VY51YYZ1TL' }]]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   });
 }
@@ -241,7 +241,7 @@ test('opted-in signup still sends role only, never email or age', async ({ page,
   await page.locator('#waitlist button[type=submit]').click();
   await expect(page.locator('.wl-success')).toBeVisible();
   const queue = await commands(page);
-  expect(queue.filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role: 'student' }]]);
+  expect(queue.filter(entry => entry[0] === 'event')).toEqual([['event', 'waitlist_signup', { role: 'student', send_to: 'G-VY51YYZ1TL' }]]);
   expect(JSON.stringify(queue)).not.toMatch(/private-opt-in|under13|13plus|"email"|"age"/);
 });
 

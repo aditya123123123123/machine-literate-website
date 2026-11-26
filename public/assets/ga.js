@@ -56,6 +56,10 @@
     allow_google_signals: false,
     allow_ad_personalization_signals: false,
   });
+  // Google Ads conversion tag: ad visits only, cookieless (ad_storage stays denied).
+  const adsTag = 'AW-18570894075';
+  const adsWaitlist = `${adsTag}/BG0tCNbLksAdEPu1pZdF`;
+  if (adVisit) window.gtag('config', adsTag, { allow_ad_personalization_signals: false });
 
   window.mlTrack = (name, params) => {
     // Only known signup roles may leave the page. Never forward form text.
@@ -65,7 +69,9 @@
     };
     if (!Object.hasOwn(roles, name) || !roles[name].includes(params?.role)) return;
     try {
-      window.gtag('event', name, { role: params.role });
+      window.gtag('event', name, { role: params.role, send_to: 'G-VY51YYZ1TL' });
+      // Native Ads conversion; carries no form data, only the conversion label.
+      if (adVisit && name === 'waitlist_signup') window.gtag('event', 'conversion', { send_to: adsWaitlist });
     } catch { /* Analytics must never interrupt a signup. */ }
   };
   const script = document.createElement('script');
