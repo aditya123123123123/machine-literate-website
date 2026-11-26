@@ -49,12 +49,13 @@ for (const hostname of ['machineliterate.org', 'www.machineliterate.org']) {
     await expect(banner(page)).toBeVisible();
     expect(await choice(page)).toBeNull();
     expect(await updates(page)).toEqual([]);
-    expect(queue).toHaveLength(3);
+    expect(queue).toHaveLength(4);
     expect(queue[0]).toEqual(['consent', 'default', {
       ad_storage: 'denied', analytics_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
     }]);
     expect(queue[1][0]).toBe('js');
     expect(queue[2]).toEqual(['config', measurementId, { allow_google_signals: false, allow_ad_personalization_signals: false }]);
+    expect(queue[3]).toEqual(['config', 'AW-18570894075', { allow_ad_personalization_signals: false }]);
     expect(await page.locator('script[src*="googletagmanager"]').evaluate(script => script.async)).toBe(true);
     expect(external.join(' ')).not.toMatch(/gtm\.js|GTM-WMD4BZZK/);
     expect(await context.cookies()).toEqual([]);
@@ -132,12 +133,13 @@ for (const hostname of ['machineliterate.org', 'www.machineliterate.org']) {
     await page.reload();
     await expect(banner(page)).toBeHidden();
     const queue = await commands(page);
-    expect(queue).toHaveLength(4);
+    expect(queue).toHaveLength(5);
     expect(queue[0][1]).toBe('default');
     expect(queue[0][2].analytics_storage).toBe('denied');
     expect(queue[1]).toEqual(['consent', 'update', { analytics_storage: 'granted' }]);
     expect(queue[2][0]).toBe('js');
     expect(queue[3]).toEqual(['config', measurementId, { allow_google_signals: false, allow_ad_personalization_signals: false }]);
+    expect(queue[4]).toEqual(['config', 'AW-18570894075', { allow_ad_personalization_signals: false }]);
   });
 
   test(`No thanks persists without a grant: ${hostname}`, async ({ page, context, request, baseURL }) => {
@@ -149,7 +151,7 @@ for (const hostname of ['machineliterate.org', 'www.machineliterate.org']) {
     await page.reload();
     await expect(banner(page)).toBeHidden();
     expect(await choice(page)).toBe('denied');
-    expect(await commands(page)).toHaveLength(3);
+    expect(await commands(page)).toHaveLength(4);
     expect(await updates(page)).toEqual([]);
     expect(await context.cookies()).toEqual([]);
   });
