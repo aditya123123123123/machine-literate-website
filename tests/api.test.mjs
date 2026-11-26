@@ -77,6 +77,12 @@ test('accepts form-encoded bodies too', async () => {
   assert.equal(r.json.ok, true);
 });
 
+test('waitlist native form redirects to the joined page', async () => {
+  const r = await call({ body: 'role=teacher&email=t%40example.com', headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'text/html' } });
+  assert.equal(r.status, 303);
+  assert.equal(r.headers.location, '/joined');
+});
+
 test('honeypot submissions are silently accepted', async () => {
   const r = await post({ role: 'parent', email: 'bot@example.com', website: 'spam' });
   assert.deepEqual(r.json, { ok: true });

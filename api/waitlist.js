@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   // the request the same way, then return success without storing anything.
   if (process.env.VERCEL_ENV !== 'production') {
     const accept = String(req.headers.accept || '');
-    if (!accept.includes('application/json')) { res.statusCode = 303; res.setHeader('Location', '/?joined=1'); return res.end(); }
+    if (!accept.includes('application/json')) { res.statusCode = 303; res.setHeader('Location', '/joined'); return res.end(); }
     return send(res, 200, { ok: true, dryRun: true });
   }
   const url = process.env.DATABASE_URL;
@@ -62,7 +62,7 @@ export default async function handler(req, res) {
       VALUES (${email}, ${role}, ${age}, ${owner})
       ON CONFLICT (email) DO NOTHING RETURNING id`;
     const accept = String(req.headers.accept || '');
-    if (!accept.includes('application/json')) { res.statusCode = 303; res.setHeader('Location', '/?joined=1'); return res.end(); }
+    if (!accept.includes('application/json')) { res.statusCode = 303; res.setHeader('Location', '/joined'); return res.end(); }
     return send(res, 200, { ok: true, duplicate: rows.length === 0 });
   } catch (err) {
     ready = undefined;
